@@ -14,7 +14,7 @@
             <el-input v-model="form.email" placeholder="Email"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary">Create my enamel account</el-button>
+            <el-button type="primary" @click="capture">Create my enamel account</el-button>
           </el-form-item>
         </el-form>
         <span>Already have an enamel account?</span>
@@ -30,6 +30,9 @@
 </template>
 
 <script>
+import { CaptureEmail } from '../constants/query.gql'
+import { validateEmail } from "../helpers/helpers";
+
 export default {
     data() {
         return {
@@ -39,6 +42,30 @@ export default {
                 email: '',
             }
         }
+    },
+    methods: {
+        capture() {
+            const { email } = this.form
+            if (!email || !validateEmail(email)) {
+                this.error = 'Please enter a valid email'
+                return
+            }
+            this.$apollo.mutate({
+                mutation: CaptureEmail,
+                variables: {email}
+            }).then(({data}) => {
+                this.submitted = true
+                this.error = false
+                console.log(data.captureEmail.id)
+            }).catch((error) => {
+                if (error.graphQLErrors.length >= 1) {
+                    this.error = error.graphQLErrors[0].message
+                } else {
+                    this.error = 'Something went wrong'
+                }
+                console.log(error)
+            })
+        },
     }
 }
 </script>
